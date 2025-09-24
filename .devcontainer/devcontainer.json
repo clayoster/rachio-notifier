@@ -1,0 +1,7 @@
+{
+  "dockerFile": "../Dockerfile",
+  "build": {
+    "target": "dev"
+  },
+  "context": ".."
+}
