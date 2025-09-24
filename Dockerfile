@@ -47,4 +47,4 @@ FROM base AS prod
 USER app
 
 # Run the python app with gunicorn (settings are in gunicorn.conf.py)
-CMD ["python3", "rachio-notifier.py"]
+CMD ["python3", "rachio_notifier.py"]
