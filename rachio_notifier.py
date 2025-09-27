@@ -29,10 +29,7 @@ pushover_api_token = os.environ.get('pushover_api_token', None)
 
 # Determine if this is running in a container. Using alpine-release file
 # for detection as that is the base image for the container build
-if os.path.exists("/etc/alpine-release"):
-    container = True
-else:
-    container = False
+container = os.path.exists("/etc/alpine-release")
 
 # If the script is being run in a container, log to stdout
 # Otherwise log to syslog
@@ -138,10 +135,8 @@ def time_magic(nextRun):
     nextRunDate = datetime.strftime(  nextRun_datetime_local, "%-m/%-d")
     tomorrowDate = (datetime.now() + timedelta(1)).strftime("%-m/%-d")
 
-    if nextRunDate == tomorrowDate:
-        tomorrow = True
-    else:
-        tomorrow = False
+    # Determine if the nextRun is tomorrow
+    tomorrow = nextRunDate == tomorrowDate
 
     return currentTimeHour, nextRunSeconds, nextRunDay, nextRunTime, nextRunDate, tomorrow
 
