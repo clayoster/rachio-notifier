@@ -17,7 +17,7 @@ import syslog
 
 # Configuration
 jsondata = '/var/lib/misc/sprinklers.json'
-timezone = 'America/Chicago'
+timezone = os.environ.get('timezone', 'America/Chicago')
 
 # Rachio API Configuration
 rachio_api_token = os.environ.get('rachio_api_token', None)
