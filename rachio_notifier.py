@@ -27,12 +27,23 @@ rachio_device_id = os.environ.get('rachio_device_id', None)
 pushover_user_key = os.environ.get('pushover_user_key', None)
 pushover_api_token = os.environ.get('pushover_api_token', None)
 
-def syslog_msg(msg):
-    #syslog.syslog(msg)
-    print(msg)
+# Determine if this is running in a container. Using alpine-release file
+# for detection as that is the base image for the container build
+if os.path.exists("/etc/alpine-release"):
+    container = True
+else:
+    container = False
+
+# If the script is being run in a container, log to stdout
+# Otherwise log to syslog
+def log_msg(msg):
+    if container:
+        print(msg)
+    else:
+        syslog.syslog(msg)
 
 def notification(message):
-    #syslog_msg("i should be notifying!")
+    #log_msg("i should be notifying!")
     conn = http.client.HTTPSConnection("api.pushover.net:443")
     conn.request("POST", "/1/messages.json",
       urllib.parse.urlencode({
@@ -49,19 +60,19 @@ def load_persistent_data():
             if "nextRun" in data:
                 old_nextRun = data["nextRun"]
             else:
-                syslog_msg("nextRun not found in file")
+                log_msg("nextRun not found in file")
                 old_nextRun = None
 
             if "reminder" in data:
                 old_reminder = data["reminder"]
             else:
-                syslog_msg("reminder not found in file")
+                log_msg("reminder not found in file")
                 old_reminder = None
 
             f.close()
             return old_nextRun, old_reminder
     else:
-        syslog_msg("file not found: " +jsondata +". Fetch new data and exit")
+        log_msg("file not found: " +jsondata +". Fetch new data and exit")
         nextRun = get_nextrun()
         reminder = None
         #notification_sent = "no"
@@ -142,7 +153,7 @@ if deviceState == 'IDLE':
     if nextRun != None:
         currentTimeHour, nextRunSeconds, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
     else:
-        syslog_msg('No future watering events scheduled. Exiting script')
+        log_msg('No future watering events scheduled. Exiting script')
         sys.exit()
 
     if nextRun != old_nextRun:
@@ -178,8 +189,8 @@ if deviceState == 'IDLE':
     write_persistent_data(nextRun,reminder)
 
 elif deviceState == 'WATERING':
-    syslog_msg('Sprinklers are currently running, exit')
+    log_msg('Sprinklers are currently running, exit')
     sys.exit()
 elif deviceState == 'STANDBY':
-    syslog_msg('Controller is in standby mode, no reason to evaluate schedule.')
+    log_msg('Controller is in standby mode, no reason to evaluate schedule.')
     sys.exit()
