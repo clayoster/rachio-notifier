@@ -12,6 +12,7 @@ import os.path
 import http.client
 import urllib.request
 import json
+import sys
 import syslog
 
 # Configuration
@@ -65,7 +66,7 @@ def load_persistent_data():
         reminder = None
         #notification_sent = "no"
         write_persistent_data(nextRun,reminder)
-        exit()
+        sys.exit()
 
 def write_persistent_data(nextRun,reminder):
     data = {'nextRun': nextRun, 'reminder': reminder}
@@ -142,7 +143,7 @@ if deviceState == 'IDLE':
         currentTimeHour, nextRunSeconds, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
     else:
         syslog_msg('No future watering events scheduled. Exiting script')
-        exit()
+        sys.exit()
 
     if nextRun != old_nextRun:
         # Schedule has changed
@@ -178,7 +179,7 @@ if deviceState == 'IDLE':
 
 elif deviceState == 'WATERING':
     syslog_msg('Sprinklers are currently running, exit')
-    exit()
+    sys.exit()
 elif deviceState == 'STANDBY':
     syslog_msg('Controller is in standby mode, no reason to evaluate schedule.')
-    exit()
+    sys.exit()
