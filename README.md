@@ -58,7 +58,7 @@ Define a cron that sources a .env file with your environment variables defined, 
 1 */2 * 5-10 * . /path/to/.env; python3 /path/to/rachio_notifier.py
 ```
 
-# CronJob (Container-Based)
+### CronJob (Container-Based)
 Define a cron that will run the script using the pre-built conatiner image using Docker (or podman). 
 
 - Create a .env file with your environment variables defined, and adjust the `--env-file /path/to/.env` part of the command below appropriately
