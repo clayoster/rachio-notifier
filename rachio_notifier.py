@@ -56,29 +56,29 @@ def load_persistent_data():
         with open(jsondata, 'r', encoding='utf-8') as f:
             data = json.load(f)
             if "nextRun" in data:
-                old_nextRun = data["nextRun"]
+                _old_nextRun = data["nextRun"]
             else:
                 log_msg("nextRun not found in file")
-                old_nextRun = None
+                _old_nextRun = None
 
             if "reminder" in data:
-                old_reminder = data["reminder"]
+                _old_reminder = data["reminder"]
             else:
                 log_msg("reminder not found in file")
-                old_reminder = None
+                _old_reminder = None
 
             f.close()
-            return old_nextRun, old_reminder
+            return _old_nextRun, _old_reminder
     else:
-        log_msg("file not found: " +jsondata +". Fetch new data and exit")
-        nextRun = get_nextrun()
-        reminder = False
+        log_msg("file not found: " + jsondata +". Fetch new data and exit")
+        _nextRun = get_nextrun()
+        _reminder = False
         #notification_sent = "no"
-        write_persistent_data(nextRun,reminder)
+        write_persistent_data(_nextRun,_reminder)
         sys.exit()
 
-def write_persistent_data(nextRun,reminder):
-    data = {'nextRun': nextRun, 'reminder': reminder}
+def write_persistent_data(_nextRun,_reminder):
+    data = {'nextRun': _nextRun, 'reminder': _reminder}
     with open(jsondata, 'w', encoding='utf-8') as f:
         json.dump(data, f)
         f.close()
@@ -88,9 +88,9 @@ def get_nextrun():
     req = urllib.request.Request(url="https://cloud-rest.rach.io/device/listZones/"+rachio_device_id)
     req.add_header('Authorization', 'Bearer '+rachio_api_token)
     responseData = urllib.request.urlopen(req).read().decode()
-    nextRun = json.loads(responseData)['zoneSummary'][0]['zoneState']['nextRun']
+    _nextRun = json.loads(responseData)['zoneSummary'][0]['zoneState']['nextRun']
 
-    return nextRun
+    return _nextRun
 
 def get_devicestate():
     req = urllib.request.Request(url="https://cloud-rest.rach.io/device/getDeviceState/"+rachio_device_id)
@@ -99,44 +99,44 @@ def get_devicestate():
     responseData_State = json.loads(responseData)['state']
 
     if "state" in responseData_State:
-        deviceState = responseData_State['state']
+        _deviceState = responseData_State['state']
     else:
-        deviceState = None
+        _deviceState = None
 
     if "nextRun" in responseData_State:
-        nextRun = responseData_State['nextRun']
+        _nextRun = responseData_State['nextRun']
     else:
-        nextRun = None
+        _nextRun = None
 
-    return deviceState, nextRun
+    return _deviceState, _nextRun
 
-def time_magic(nextRun):
+def time_magic(_nextRun):
     # Convert nextRun string to datetime object
-    myformat = "%Y-%m-%dT%H:%M:%SZ"
-    nextRun_datetime = datetime.strptime(nextRun, myformat)
-    nextRunDay = datetime.strftime(nextRun_datetime, "%A")
+    _myformat = "%Y-%m-%dT%H:%M:%SZ"
+    _nextRun_datetime = datetime.strptime(nextRun, _myformat)
+    _nextRunDay = datetime.strftime(_nextRun_datetime, "%A")
 
     # Convert datetime object to UTC
-    utc_timezone = pytz.timezone("UTC")
-    nextRun_datetime_UTC = utc_timezone.localize(nextRun_datetime)
+    _utc_timezone = pytz.timezone("UTC")
+    _nextRun_datetime_UTC = _utc_timezone.localize(_nextRun_datetime)
 
     # Convert to local timezone
-    local_timezone = pytz.timezone(timezone)
-    nextRun_datetime_local = nextRun_datetime_UTC.astimezone(local_timezone)
+    _local_timezone = pytz.timezone(timezone)
+    _nextRun_datetime_local = _nextRun_datetime_UTC.astimezone(_local_timezone)
 
     # Capture current time and hour
-    currentTime = datetime.now(local_timezone)
-    currentTimeHour = int(datetime.strftime(currentTime, "%-H"))
+    _currentTime = datetime.now(_local_timezone)
+    _currentTimeHour = int(datetime.strftime(_currentTime, "%-H"))
 
     # Evaluate nextRun time and date
-    nextRunTime = datetime.strftime(nextRun_datetime_local, "%-H:%M%p")
-    nextRunDate = datetime.strftime(nextRun_datetime_local, "%-m/%-d")
-    tomorrowDate = (currentTime + timedelta(1)).strftime("%-m/%-d")
+    _nextRunTime = datetime.strftime(_nextRun_datetime_local, "%-H:%M%p")
+    _nextRunDate = datetime.strftime(_nextRun_datetime_local, "%-m/%-d")
+    _tomorrowDate = (_currentTime + timedelta(1)).strftime("%-m/%-d")
 
     # Determine if the nextRun is tomorrow
-    tomorrow = nextRunDate == tomorrowDate
+    _tomorrow = _nextRunDate == _tomorrowDate
 
-    return currentTimeHour, nextRunDay, nextRunTime, nextRunDate, tomorrow
+    return _currentTimeHour, _nextRunDay, _nextRunTime, _nextRunDate, _tomorrow
 
 old_nextRun, old_reminder = load_persistent_data()
 deviceState, nextRun = get_devicestate()
