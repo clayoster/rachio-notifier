@@ -158,12 +158,18 @@ if deviceState == 'IDLE':
     if nextRun != old_nextRun:
         # Schedule has changed
         if tomorrow:
-            notification("Irrigation Schedule Changed\nNext Run: Tomorrow at " +nextRunTime)
+            notification(
+                "Irrigation Schedule Changed\n"
+                "Next Run: Tomorrow at " +nextRunTime
+            )
         else:
-            notification("Irrigation Schedule Changed\nNext Run: " +nextRunDay + " " + nextRunDate + " at " +nextRunTime)
+            notification(
+                "Irrigation Schedule Changed\n"
+                "Next Run: " +nextRunDay + " " + nextRunDate + " at " +nextRunTime
+            )
 
-        # Set reminder to false if the scheduled run is not tomorrow. If it is, a second notification
-        # about the schedule would be redundant.
+        # Set reminder to false if the scheduled run is not tomorrow.
+        # If it is, a second notification about the schedule would be redundant.
         if not tomorrow:
             reminder = False
         else:
