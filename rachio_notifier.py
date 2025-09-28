@@ -16,16 +16,16 @@ import urllib.parse
 import pytz
 
 # Configuration
-jsondata = '/var/lib/misc/sprinklers.json'
-timezone = os.environ.get('timezone', 'America/Chicago')
+JSONDATA = '/var/lib/misc/sprinklers.json'
+TIMEZONE = os.environ.get('TIMEZONE', 'America/Chicago')
 
 # Rachio API Configuration
-rachio_api_token = os.environ.get('rachio_api_token', None)
-rachio_device_id = os.environ.get('rachio_device_id', None)
+RACHIO_API_TOKEN = os.environ.get('RACHIO_API_TOKEN', None)
+RACHIO_DEVICE_ID = os.environ.get('RACHIO_DEVICE_ID', None)
 
 # Pushover API Configuration
-pushover_user_key = os.environ.get('pushover_user_key', None)
-pushover_api_token = os.environ.get('pushover_api_token', None)
+PUSHOVER_USER_KEY = os.environ.get('PUSHOVER_USER_KEY', None)
+PUSHOVER_API_TOKEN = os.environ.get('PUSHOVER_API_TOKEN', None)
 
 # Determine if this is running in a container. Using alpine-release file
 # for detection as that is the base image for the container build
@@ -43,22 +43,22 @@ def notification(message):
     conn = http.client.HTTPSConnection("api.pushover.net:443", timeout=10)
     conn.request("POST", "/1/messages.json",
       urllib.parse.urlencode({
-        "token": pushover_api_token,
-        "user": pushover_user_key,
+        "token": PUSHOVER_API_TOKEN,
+        "user": PUSHOVER_USER_KEY,
         "message": message,
       }), { "Content-type": "application/x-www-form-urlencoded" })
     conn.getresponse()
     conn.close()
 
 def load_persistent_data():
-    if os.path.isfile(jsondata):
-        with open(jsondata, 'r', encoding='utf-8') as f:
+    if os.path.isfile(JSONDATA):
+        with open(JSONDATA, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            if "nextRun" in data:
-                _old_nextRun = data["nextRun"]
+            if "next_run" in data:
+                _old_next_run = data["next_run"]
             else:
-                log_msg("nextRun not found in file")
-                _old_nextRun = None
+                log_msg("next_run not found in file")
+                _old_next_run = None
 
             if "reminder" in data:
                 _old_reminder = data["reminder"]
@@ -67,135 +67,136 @@ def load_persistent_data():
                 _old_reminder = None
 
             f.close()
-            return _old_nextRun, _old_reminder
+            return _old_next_run, _old_reminder
     else:
-        log_msg("file not found: " + jsondata +". Fetch new data and exit")
-        _nextRun = get_nextrun()
+        log_msg("file not found: " + JSONDATA +". Fetch new data and exit")
+        _next_run = get_nextrun()
         _reminder = False
         #notification_sent = "no"
-        write_persistent_data(_nextRun,_reminder)
+        write_persistent_data(_next_run,_reminder)
         sys.exit()
 
-def write_persistent_data(_nextRun,_reminder):
-    data = {'nextRun': _nextRun, 'reminder': _reminder}
-    with open(jsondata, 'w', encoding='utf-8') as f:
+def write_persistent_data(_next_run,_reminder):
+    data = {'next_run': _next_run, 'reminder': _reminder}
+    with open(JSONDATA, 'w', encoding='utf-8') as f:
         json.dump(data, f)
         f.close()
 
 # Not used currently
 def get_nextrun():
     conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
-    headers = {"Authorization": "Bearer " + rachio_api_token}
-    conn.request("GET", "/device/listZones/" + rachio_device_id, headers=headers)
+    headers = {"Authorization": "Bearer " + RACHIO_API_TOKEN}
+    conn.request("GET", "/device/listZones/" + RACHIO_DEVICE_ID, headers=headers)
     response = conn.getresponse()
-    responseData = response.read().decode()
+    response_data = response.read().decode()
     conn.close()
 
-    _nextRun = json.loads(responseData)["zoneSummary"][0]["zoneState"]["nextRun"]
-    return _nextRun
+    _next_run = json.loads(response_data)["zoneSummary"][0]["zoneState"]["nextRun"]
+    return _next_run
 
 def get_devicestate():
     conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
-    headers = {"Authorization": "Bearer " + rachio_api_token}
-    conn.request("GET", "/device/getDeviceState/" + rachio_device_id, headers=headers)
+    headers = {"Authorization": "Bearer " + RACHIO_API_TOKEN}
+    conn.request("GET", "/device/getDeviceState/" + RACHIO_DEVICE_ID, headers=headers)
     response = conn.getresponse()
-    responseData = response.read().decode()
+    response_data = response.read().decode()
     conn.close()
 
-    responseData_State = json.loads(responseData)["state"]
+    response_data_state = json.loads(response_data)["state"]
 
-    if "state" in responseData_State:
-        _deviceState = responseData_State['state']
+    if "state" in response_data_state:
+        _device_state = response_data_state['state']
     else:
-        _deviceState = None
+        _device_state = None
 
-    if "nextRun" in responseData_State:
-        _nextRun = responseData_State['nextRun']
+    if "nextRun" in response_data_state:
+        _next_run = response_data_state['nextRun']
     else:
-        _nextRun = None
+        _next_run = None
 
-    return _deviceState, _nextRun
+    return _device_state, _next_run
 
-def time_magic(_nextRun):
-    # Convert nextRun string to datetime object
+def time_magic(_next_run):
+    # Convert next_run string to datetime object
     _myformat = "%Y-%m-%dT%H:%M:%SZ"
-    _nextRun_datetime = datetime.strptime(nextRun, _myformat)
-    _nextRunDay = datetime.strftime(_nextRun_datetime, "%A")
+    _next_run_datetime = datetime.strptime(_next_run, _myformat)
+    _next_run_day = datetime.strftime(_next_run_datetime, "%A")
 
     # Convert datetime object to UTC
     _utc_timezone = pytz.timezone("UTC")
-    _nextRun_datetime_UTC = _utc_timezone.localize(_nextRun_datetime)
+    _next_run_datetime_utc = _utc_timezone.localize(_next_run_datetime)
 
     # Convert to local timezone
-    _local_timezone = pytz.timezone(timezone)
-    _nextRun_datetime_local = _nextRun_datetime_UTC.astimezone(_local_timezone)
+    _local_timezone = pytz.timezone(TIMEZONE)
+    _next_run_datetime_local = _next_run_datetime_utc.astimezone(_local_timezone)
 
     # Capture current time and hour
-    _currentTime = datetime.now(_local_timezone)
-    _currentTimeHour = int(datetime.strftime(_currentTime, "%-H"))
+    _current_time = datetime.now(_local_timezone)
+    _current_time_hour = int(datetime.strftime(_current_time, "%-H"))
 
-    # Evaluate nextRun time and date
-    _nextRunTime = datetime.strftime(_nextRun_datetime_local, "%-H:%M%p")
-    _nextRunDate = datetime.strftime(_nextRun_datetime_local, "%-m/%-d")
-    _tomorrowDate = (_currentTime + timedelta(1)).strftime("%-m/%-d")
+    # Evaluate next_run time and date
+    _next_run_time = datetime.strftime(_next_run_datetime_local, "%-H:%M%p")
+    _next_run_date = datetime.strftime(_next_run_datetime_local, "%-m/%-d")
+    _tomorrow_date = (_current_time + timedelta(1)).strftime("%-m/%-d")
 
-    # Determine if the nextRun is tomorrow
-    _tomorrow = _nextRunDate == _tomorrowDate
+    # Determine if the next_run is tomorrow
+    _tomorrow = _next_run_date == _tomorrow_date
 
-    return _currentTimeHour, _nextRunDay, _nextRunTime, _nextRunDate, _tomorrow
+    return _current_time_hour, _next_run_day, _next_run_time, _next_run_date, _tomorrow
 
-old_nextRun, old_reminder = load_persistent_data()
-deviceState, nextRun = get_devicestate()
+old_next_run, old_reminder = load_persistent_data()
+device_state, next_run = get_devicestate()
 
 # Only evaluate schedule changes if device is idle
-if deviceState == 'IDLE':
-    if nextRun is not None:
-        currentTimeHour, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
+if device_state == 'IDLE':
+    if next_run is not None:
+        current_time_hour, next_runDay, next_runTime, next_runDate, tomorrow = time_magic(next_run)
     else:
+        print(next_run)
         log_msg('No future watering events scheduled. Exiting script')
         sys.exit()
 
-    if nextRun != old_nextRun:
+    if next_run != old_next_run:
         # Schedule has changed
         if tomorrow:
             notification(
                 "Irrigation Schedule Changed\n"
-                "Next Run: Tomorrow at " +nextRunTime
+                "Next Run: Tomorrow at " +next_runTime
             )
         else:
             notification(
                 "Irrigation Schedule Changed\n"
-                "Next Run: " +nextRunDay + " " + nextRunDate + " at " +nextRunTime
+                "Next Run: " +next_runDay + " " + next_runDate + " at " +next_runTime
             )
 
         # Set reminder to false if the scheduled run is not tomorrow.
         # If it is, a second notification about the schedule would be redundant.
         if not tomorrow:
-            reminder = False
+            REMINDER = False
         else:
-            reminder = True
+            REMINDER = True
 
     # If the hour is between 6pm and 10pm and the next run is tomorrow, send a notification is one
     # hasn't already been sent.
-    if 18 <= currentTimeHour <= 22:
+    if 18 <= current_time_hour <= 22:
         if tomorrow:
-            # If nextRun is tomorrow
+            # If next_run is tomorrow
             if not old_reminder:
                 # If a reminder hasn't already been sent
-                notification("Sprinklers will run tomorrow at " +nextRunTime)
-                reminder = True
+                notification("Sprinklers will run tomorrow at " +next_runTime)
+                REMINDER = True
 
     # If the reminder variable was not set in this block, assign it the value from old_reminder
     try:
-        reminder # pylint: disable=used-before-assignment
+        REMINDER # pylint: disable=used-before-assignment
     except NameError:
-        reminder = old_reminder
+        REMINDER = old_reminder
 
-    write_persistent_data(nextRun,reminder)
+    write_persistent_data(next_run,REMINDER)
 
-elif deviceState == 'WATERING':
+elif device_state == 'WATERING':
     log_msg('Sprinklers are currently running, exit')
     sys.exit()
-elif deviceState == 'STANDBY':
+elif device_state == 'STANDBY':
     log_msg('Controller is in standby mode, no reason to evaluate schedule.')
     sys.exit()
