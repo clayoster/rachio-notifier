@@ -71,7 +71,7 @@ def load_persistent_data():
     else:
         log_msg("file not found: " +jsondata +". Fetch new data and exit")
         nextRun = get_nextrun()
-        reminder = None
+        reminder = False
         #notification_sent = "no"
         write_persistent_data(nextRun,reminder)
         sys.exit()
