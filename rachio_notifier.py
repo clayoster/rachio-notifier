@@ -13,7 +13,6 @@ import syslog
 import json
 import http.client
 import urllib.parse
-import urllib.request
 import pytz
 
 # Configuration
@@ -41,8 +40,7 @@ def log_msg(msg):
         syslog.syslog(msg)
 
 def notification(message):
-    #log_msg("i should be notifying!")
-    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn = http.client.HTTPSConnection("api.pushover.net:443", timeout=10)
     conn.request("POST", "/1/messages.json",
       urllib.parse.urlencode({
         "token": pushover_api_token,
@@ -50,6 +48,7 @@ def notification(message):
         "message": message,
       }), { "Content-type": "application/x-www-form-urlencoded" })
     conn.getresponse()
+    conn.close()
 
 def load_persistent_data():
     if os.path.isfile(jsondata):
@@ -85,18 +84,25 @@ def write_persistent_data(_nextRun,_reminder):
 
 # Not used currently
 def get_nextrun():
-    req = urllib.request.Request(url="https://cloud-rest.rach.io/device/listZones/"+rachio_device_id)
-    req.add_header('Authorization', 'Bearer '+rachio_api_token)
-    responseData = urllib.request.urlopen(req).read().decode()
-    _nextRun = json.loads(responseData)['zoneSummary'][0]['zoneState']['nextRun']
+    conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
+    headers = {"Authorization": "Bearer " + rachio_api_token}
+    conn.request("GET", "/device/listZones/" + rachio_device_id, headers=headers)
+    response = conn.getresponse()
+    responseData = response.read().decode()
+    conn.close()
 
+    _nextRun = json.loads(responseData)["zoneSummary"][0]["zoneState"]["nextRun"]
     return _nextRun
 
 def get_devicestate():
-    req = urllib.request.Request(url="https://cloud-rest.rach.io/device/getDeviceState/"+rachio_device_id)
-    req.add_header('Authorization', 'Bearer '+rachio_api_token)
-    responseData = urllib.request.urlopen(req).read().decode()
-    responseData_State = json.loads(responseData)['state']
+    conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
+    headers = {"Authorization": "Bearer " + rachio_api_token}
+    conn.request("GET", "/device/getDeviceState/" + rachio_device_id, headers=headers)
+    response = conn.getresponse()
+    responseData = response.read().decode()
+    conn.close()
+
+    responseData_State = json.loads(responseData)["state"]
 
     if "state" in responseData_State:
         _deviceState = responseData_State['state']
@@ -175,7 +181,7 @@ if deviceState == 'IDLE':
 
     # If the reminder variable was not set in this block, assign it the value from old_reminder
     try:
-        reminder
+        reminder # pylint: disable=used-before-assignment
     except NameError:
         reminder = old_reminder
 
