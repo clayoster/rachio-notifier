@@ -152,7 +152,6 @@ if device_state == 'IDLE':
     if next_run is not None:
         current_time_hour, next_runDay, next_runTime, next_runDate, tomorrow = time_magic(next_run)
     else:
-        print(next_run)
         log_msg('No future watering events scheduled. Exiting script')
         sys.exit()
 
