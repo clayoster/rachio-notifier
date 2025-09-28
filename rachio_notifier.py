@@ -5,12 +5,6 @@ Evalutes the next scheduled run time for a Rachio sprinkler controller
 and sends a notification if the schedule has changed
 """
 
-# Rachio Docs
-# https://support.rachio.com/en_us/public-api-documentation-S1UydL1Fv
-# https://rachio.readme.io/reference/rate-limiting
-# Obtaining your API Token
-# https://rachio.readme.io/reference/authentication
-
 from datetime import datetime, timedelta
 import os
 import sys
