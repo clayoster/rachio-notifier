@@ -165,7 +165,7 @@ if deviceState == 'IDLE':
 
     # If the hour is between 6pm and 10pm and the next run is tomorrow, send a notification is one
     # hasn't already been sent.
-    if currentTimeHour in range(18, 22):
+    if 18 <= currentTimeHour <= 22:
         if tomorrow:
             # If nextRun is tomorrow
             if not old_reminder:
