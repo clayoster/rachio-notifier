@@ -156,58 +156,67 @@ def time_magic(_next_run):
 
     return _current_time_hour, _next_run_day, _next_run_time, _next_run_date, _tomorrow
 
-old_next_run, old_reminder = load_persistent_data()
-device_state, next_run = get_devicestate()
+def main(): # pylint: disable=too-many-branches
+    """ Main function """
+    # Fetch persistent data and device state
+    old_next_run, old_reminder = load_persistent_data()
+    device_state, next_run = get_devicestate()
 
-# Only evaluate schedule changes if device is idle
-if device_state == 'IDLE':
-    if next_run is not None:
-        current_time_hour, next_runDay, next_runTime, next_runDate, tomorrow = time_magic(next_run)
-    else:
-        log_msg('No future watering events scheduled. Exiting script')
+    # Only evaluate schedule changes if device is idle
+    if device_state == 'IDLE':
+        if next_run is not None:
+            (
+                current_time_hour, next_run_day, next_run_time, next_run_date, tomorrow
+            ) = time_magic(next_run)
+        else:
+            log_msg('No future watering events scheduled. Exiting script')
+            sys.exit()
+
+        if next_run != old_next_run:
+            # Schedule has changed
+            if tomorrow:
+                notification(
+                    "Irrigation Schedule Changed\n"
+                    "Next Run: Tomorrow at " +next_run_time
+                )
+            else:
+                notification(
+                    "Irrigation Schedule Changed\n"
+                    "Next Run: " +next_run_day + " " + next_run_date + " at " +next_run_time
+                )
+
+            # Set reminder to false if the scheduled run is not tomorrow.
+            # If it is, a second notification about the schedule would be redundant.
+            if not tomorrow:
+                reminder = False
+            else:
+                reminder = True
+
+        # If the hour is between 6pm and 10pm and the next run is tomorrow,
+        # send a notification is one hasn't already been sent.
+        if 18 <= current_time_hour <= 22:
+            if tomorrow:
+                # If next_run is tomorrow
+                if not old_reminder:
+                    # If a reminder hasn't already been sent
+                    notification("Sprinklers will run tomorrow at " +next_run_time)
+                    reminder = True
+
+        # If the reminder variable was not set in this block, assign it the value from old_reminder
+        try:
+            reminder # pylint: disable=used-before-assignment
+        except NameError:
+            reminder = old_reminder
+
+        write_persistent_data(next_run,reminder)
+
+    elif device_state == 'WATERING':
+        log_msg('Sprinklers are currently running, exit')
+        sys.exit()
+    elif device_state == 'STANDBY':
+        log_msg('Controller is in standby mode, no reason to evaluate schedule.')
         sys.exit()
 
-    if next_run != old_next_run:
-        # Schedule has changed
-        if tomorrow:
-            notification(
-                "Irrigation Schedule Changed\n"
-                "Next Run: Tomorrow at " +next_runTime
-            )
-        else:
-            notification(
-                "Irrigation Schedule Changed\n"
-                "Next Run: " +next_runDay + " " + next_runDate + " at " +next_runTime
-            )
-
-        # Set reminder to false if the scheduled run is not tomorrow.
-        # If it is, a second notification about the schedule would be redundant.
-        if not tomorrow:
-            REMINDER = False
-        else:
-            REMINDER = True
-
-    # If the hour is between 6pm and 10pm and the next run is tomorrow, send a notification is one
-    # hasn't already been sent.
-    if 18 <= current_time_hour <= 22:
-        if tomorrow:
-            # If next_run is tomorrow
-            if not old_reminder:
-                # If a reminder hasn't already been sent
-                notification("Sprinklers will run tomorrow at " +next_runTime)
-                REMINDER = True
-
-    # If the reminder variable was not set in this block, assign it the value from old_reminder
-    try:
-        REMINDER # pylint: disable=used-before-assignment
-    except NameError:
-        REMINDER = old_reminder
-
-    write_persistent_data(next_run,REMINDER)
-
-elif device_state == 'WATERING':
-    log_msg('Sprinklers are currently running, exit')
-    sys.exit()
-elif device_state == 'STANDBY':
-    log_msg('Controller is in standby mode, no reason to evaluate schedule.')
-    sys.exit()
+# Call main function
+if __name__ == "__main__":
+    main()
