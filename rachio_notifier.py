@@ -143,7 +143,7 @@ deviceState, nextRun = get_devicestate()
 
 # Only evaluate schedule changes if device is idle
 if deviceState == 'IDLE':
-    if nextRun != None:
+    if nextRun is not None:
         currentTimeHour, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
     else:
         log_msg('No future watering events scheduled. Exiting script')
