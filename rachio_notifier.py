@@ -53,7 +53,7 @@ def notification(message):
 
 def load_persistent_data():
     if os.path.isfile(jsondata):
-        with open(jsondata, 'r') as f:
+        with open(jsondata, 'r', encoding='utf-8') as f:
             data = json.load(f)
             if "nextRun" in data:
                 old_nextRun = data["nextRun"]
@@ -79,7 +79,7 @@ def load_persistent_data():
 
 def write_persistent_data(nextRun,reminder):
     data = {'nextRun': nextRun, 'reminder': reminder}
-    with open(jsondata, 'w') as f:
+    with open(jsondata, 'w', encoding='utf-8') as f:
         json.dump(data, f)
         f.close()
 
