@@ -111,12 +111,9 @@ def get_devicestate():
     return deviceState, nextRun
 
 def time_magic(nextRun):
-    epoch = datetime(1970, 1, 1)
-
-    #mytime = "2009-03-08T00:27:31.807Z"
+    # Convert nextRun string to datetime object
     myformat = "%Y-%m-%dT%H:%M:%SZ"
     nextRun_datetime = datetime.strptime(nextRun, myformat)
-    nextRunSeconds = (nextRun_datetime - epoch).total_seconds()
     nextRunDay = datetime.strftime(nextRun_datetime, "%A")
 
     # Convert datetime object to UTC
@@ -139,7 +136,7 @@ def time_magic(nextRun):
     # Determine if the nextRun is tomorrow
     tomorrow = nextRunDate == tomorrowDate
 
-    return currentTimeHour, nextRunSeconds, nextRunDay, nextRunTime, nextRunDate, tomorrow
+    return currentTimeHour, nextRunDay, nextRunTime, nextRunDate, tomorrow
 
 old_nextRun, old_reminder = load_persistent_data()
 deviceState, nextRun = get_devicestate()
@@ -147,7 +144,7 @@ deviceState, nextRun = get_devicestate()
 # Only evaluate schedule changes if device is idle
 if deviceState == 'IDLE':
     if nextRun != None:
-        currentTimeHour, nextRunSeconds, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
+        currentTimeHour, nextRunDay, nextRunTime, nextRunDate, tomorrow = time_magic(nextRun)
     else:
         log_msg('No future watering events scheduled. Exiting script')
         sys.exit()
