@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Evalutes the next scheduled run time for a Rachio sprinkler controller
+and sends a notification if the schedule has changed
+"""
+
 # Rachio Docs
 # https://support.rachio.com/en_us/public-api-documentation-S1UydL1Fv
 # https://rachio.readme.io/reference/rate-limiting
@@ -34,12 +39,14 @@ container = os.path.exists("/etc/alpine-release")
 # If the script is being run in a container, log to stdout
 # Otherwise log to syslog
 def log_msg(msg):
+    """ Log message to stdout or syslog depending on if we are in a container or not"""
     if container:
         print(msg)
     else:
         syslog.syslog(msg)
 
 def notification(message):
+    """ Send notification via Pushover """
     conn = http.client.HTTPSConnection("api.pushover.net:443", timeout=10)
     conn.request("POST", "/1/messages.json",
       urllib.parse.urlencode({
@@ -51,6 +58,7 @@ def notification(message):
     conn.close()
 
 def load_persistent_data():
+    """ Load persistent data from JSON file """
     if os.path.isfile(JSONDATA):
         with open(JSONDATA, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -77,6 +85,7 @@ def load_persistent_data():
         sys.exit()
 
 def write_persistent_data(_next_run,_reminder):
+    """ Write persistent data to JSON file """
     data = {'next_run': _next_run, 'reminder': _reminder}
     with open(JSONDATA, 'w', encoding='utf-8') as f:
         json.dump(data, f)
@@ -84,6 +93,7 @@ def write_persistent_data(_next_run,_reminder):
 
 # Not used currently
 def get_nextrun():
+    """ Get the next scheduled run time from the Rachio API """
     conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
     headers = {"Authorization": "Bearer " + RACHIO_API_TOKEN}
     conn.request("GET", "/device/listZones/" + RACHIO_DEVICE_ID, headers=headers)
@@ -95,6 +105,7 @@ def get_nextrun():
     return _next_run
 
 def get_devicestate():
+    """ Get the device state and next scheduled run time from the Rachio API """
     conn = http.client.HTTPSConnection("cloud-rest.rach.io", timeout=10)
     headers = {"Authorization": "Bearer " + RACHIO_API_TOKEN}
     conn.request("GET", "/device/getDeviceState/" + RACHIO_DEVICE_ID, headers=headers)
@@ -117,6 +128,7 @@ def get_devicestate():
     return _device_state, _next_run
 
 def time_magic(_next_run):
+    """ Convert next_run time to local timezone and deterine if next_run time is tomorrow """
     # Convert next_run string to datetime object
     _myformat = "%Y-%m-%dT%H:%M:%SZ"
     _next_run_datetime = datetime.strptime(_next_run, _myformat)
