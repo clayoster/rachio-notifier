@@ -128,13 +128,13 @@ def time_magic(nextRun):
     nextRun_datetime_local = nextRun_datetime_UTC.astimezone(local_timezone)
 
     # Capture current time and hour
-    currentTime = datetime.now()
+    currentTime = datetime.now(local_timezone)
     currentTimeHour = int(datetime.strftime(currentTime, "%-H"))
 
     # Evaluate nextRun time and date
-    nextRunTime = datetime.strftime(  nextRun_datetime_local, "%-H:%M%p")
-    nextRunDate = datetime.strftime(  nextRun_datetime_local, "%-m/%-d")
-    tomorrowDate = (datetime.now() + timedelta(1)).strftime("%-m/%-d")
+    nextRunTime = datetime.strftime(nextRun_datetime_local, "%-H:%M%p")
+    nextRunDate = datetime.strftime(nextRun_datetime_local, "%-m/%-d")
+    tomorrowDate = (currentTime + timedelta(1)).strftime("%-m/%-d")
 
     # Determine if the nextRun is tomorrow
     tomorrow = nextRunDate == tomorrowDate
