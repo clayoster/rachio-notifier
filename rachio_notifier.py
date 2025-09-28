@@ -7,13 +7,14 @@
 # https://rachio.readme.io/reference/authentication
 
 from datetime import datetime, timedelta
-import pytz
-import os.path
-import http.client
-import urllib.request
-import json
+import os
 import sys
 import syslog
+import json
+import http.client
+import urllib.parse
+import urllib.request
+import pytz
 
 # Configuration
 jsondata = '/var/lib/misc/sprinklers.json'
