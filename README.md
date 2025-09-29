@@ -32,7 +32,7 @@ To retrieve your Rachio Device ID:
 curl -H 'Authorization: Bearer <your-auth-token-here>' https://api.rach.io/1/public/person/info | jq -r '.id'
     
 # Make another request to fetch your Device ID
-curl -H 'Authorization: Bearer your-auth-token-here' https://api.rach.io/1/public/person/<your-person-id-here> | jq -r '.devices[].id'
+curl -H 'Authorization: Bearer <your-auth-token-here>' https://api.rach.io/1/public/person/<your-person-id-here> | jq -r '.devices[].id'
 ```
 
 ## Persistent Data
