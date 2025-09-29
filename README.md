@@ -29,10 +29,10 @@ Documentation for retrieving your Rachio authentication token can be found [here
 To retrieve your Rachio Device ID:
 ```shell
 # Make a request to fetch your Person ID
-curl -H 'Authorization: Bearer your-auth-token-here' https://api.rach.io/1/public/person/info | jq -r '.id'
+curl -H 'Authorization: Bearer <your-auth-token-here>' https://api.rach.io/1/public/person/info | jq -r '.id'
     
-# Make another request to using your Person ID
-curl -H 'Authorization: Bearer your-auth-token-here' https://api.rach.io/1/public/person/your-person-id-here | jq -r '.devices[].id'
+# Make another request to fetch your Device ID
+curl -H 'Authorization: Bearer your-auth-token-here' https://api.rach.io/1/public/person/<your-person-id-here> | jq -r '.devices[].id'
 ```
 
 ## Persistent Data
