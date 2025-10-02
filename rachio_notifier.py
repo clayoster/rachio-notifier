@@ -72,7 +72,7 @@ def load_persistent_data():
             return _old_next_run, _old_reminder
     else:
         log_msg("file not found: " + JSONDATA +". Fetch new data and exit")
-        _next_run = get_nextrun()
+        _device_state, _next_run = get_devicestate()
         _reminder = False
         #notification_sent = "no"
         write_persistent_data(_next_run,_reminder)
