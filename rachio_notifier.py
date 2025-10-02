@@ -113,11 +113,15 @@ def get_devicestate():
         _device_state = response_data_state['state']
     else:
         _device_state = None
+        msg = "Unable to determine device state from Rachio API"
+        log_msg(msg)
 
     if "nextRun" in response_data_state:
         _next_run = response_data_state['nextRun']
     else:
         _next_run = None
+        msg = "No future watering events are scheduled."
+        log_msg(msg)
 
     return _device_state, _next_run
 
@@ -163,21 +167,20 @@ def main(): # pylint: disable=too-many-branches
                 current_time_hour, next_run_day, next_run_time, next_run_date, tomorrow
             ) = time_magic(next_run)
         else:
-            log_msg('No future watering events scheduled. Exiting script')
             sys.exit()
 
         if next_run != old_next_run:
             # Schedule has changed
             if tomorrow:
-                notification(
-                    "Irrigation Schedule Changed\n"
-                    "Next Run: Tomorrow at " +next_run_time
-                )
+                msg = "Next Run: Tomorrow at " +next_run_time
+                log_msg("Irrigation Schedule Changed - " + msg)
+                notification("Irrigation Schedule Changed\n" + msg)
             else:
-                notification(
-                    "Irrigation Schedule Changed\n"
-                    "Next Run: " +next_run_day + " " + next_run_date + " at " +next_run_time
+                msg = (
+                    "Next Run: " +next_run_day + " " + next_run_date + " at " + next_run_time
                 )
+                log_msg("Irrigation Schedule Changed - " + msg)
+                notification("Irrigation Schedule Changed\n" + msg)
 
             # Set reminder to false if the scheduled run is not tomorrow.
             # If it is, a second notification about the schedule would be redundant.
@@ -186,6 +189,10 @@ def main(): # pylint: disable=too-many-branches
             else:
                 reminder = True
 
+        else:
+            msg = "No change to irrigation schedule was detected"
+            log_msg(msg)
+
         # If the hour is between 6pm and 10pm and the next run is tomorrow,
         # send a notification is one hasn't already been sent.
         if 18 <= current_time_hour <= 22:
@@ -193,7 +200,9 @@ def main(): # pylint: disable=too-many-branches
                 # If next_run is tomorrow
                 if not old_reminder:
                     # If a reminder hasn't already been sent
-                    notification("Sprinklers will run tomorrow at " +next_run_time)
+                    msg = "Sprinklers will run tomorrow at " + next_run_time
+                    log_msg("Reminder: " + msg)
+                    notification("Reminder\n" + msg)
                     reminder = True
 
         # If the reminder variable was not set in this block, assign it the value from old_reminder
@@ -205,10 +214,10 @@ def main(): # pylint: disable=too-many-branches
         write_persistent_data(next_run,reminder)
 
     elif device_state == 'WATERING':
-        log_msg('Sprinklers are currently running, exit')
+        log_msg('Sprinklers are currently running. Not evaluating the schedule at this time.')
         sys.exit()
     elif device_state == 'STANDBY':
-        log_msg('Controller is in standby mode, no reason to evaluate schedule.')
+        log_msg('Controller is in hibernation mode. No schedule to evaluate.')
         sys.exit()
 
 # Call main function
