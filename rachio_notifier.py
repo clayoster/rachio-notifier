@@ -51,7 +51,7 @@ def notification(message):
     response = conn.getresponse()
     response_data = response.read().decode()
     conn.close()
-    
+
     response_data_status = json.loads(response_data)["status"]
 
     if response_data_status == 1:
