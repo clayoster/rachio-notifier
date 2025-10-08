@@ -20,7 +20,6 @@ def mock_https(monkeypatch):
     monkeypatch.setattr("http.client.HTTPSConnection", lambda *a, **kw: mock_conn)
     return mock_conn
 
-
 @pytest.fixture(autouse=True)
 def fake_jsondata(tmp_path, monkeypatch):
     """
@@ -29,7 +28,6 @@ def fake_jsondata(tmp_path, monkeypatch):
     testfile = tmp_path / "rachio.json"
     monkeypatch.setattr("rachio_notifier.JSONDATA", str(testfile))
     return testfile
-
 
 @pytest.fixture
 def no_exit(monkeypatch):
