@@ -48,8 +48,17 @@ def notification(message):
         "user": PUSHOVER_USER_KEY,
         "message": message,
       }), { "Content-type": "application/x-www-form-urlencoded" })
-    conn.getresponse()
+    response = conn.getresponse()
+    response_data = response.read().decode()
     conn.close()
+    
+    response_data_status = json.loads(response_data)["status"]
+
+    if response_data_status == 1:
+        log_msg("Notification relayed via Pushover succesfully")
+    else:
+        response_data_errors = json.loads(response_data)["errors"]
+        log_msg("Error sending notification via Pushover: " + str(response_data_errors))
 
 def load_persistent_data():
     """ Load persistent data from JSON file """

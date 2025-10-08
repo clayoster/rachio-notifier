@@ -17,12 +17,47 @@ def test_write_and_load(fake_jsondata):
     assert old_reminder is True
 
 # Test the notification function to ensure it makes the expected HTTP calls
-# TODO: This test needs improvement to actually verify the notification was sent
-def test_notification(mock_https):
+def test_notification_success(monkeypatch, mock_https):
+    mock_response_json = """
+    {
+      "status":1,
+      "request":"ff3a58e7-eedc-4b6b-891e-42e075d30538"
+    }
+    """
+    mock_https.getresponse.return_value.read.return_value = mock_response_json.encode()
+    
+    # Define object to capture log messages
+    logs = []
+    monkeypatch.setattr("rachio_notifier.log_msg", lambda msg: logs.append(msg))
+
     notification("Test")
     mock_https.request.assert_called_once()
     mock_https.getresponse.assert_called_once()
     mock_https.close.assert_called_once()
+    assert "Notification relayed via Pushover succesfully" in logs[0]
+
+# Test the notification function when the Pushover API returns an error
+def test_notification_fail(monkeypatch, mock_https):
+    mock_response_json = """
+    {
+      "token":"invalid",
+      "errors":["application token is invalid, see https://pushover.net/api"],
+      "status":0,
+      "request":"55778a2c-9664-459c-800a-15a2f2cd0aa5"
+    }
+    """
+    mock_https.getresponse.return_value.read.return_value = mock_response_json.encode()
+    
+    # Define object to capture log messages
+    logs = []
+    monkeypatch.setattr("rachio_notifier.log_msg", lambda msg: logs.append(msg))
+
+    notification("Test")
+    mock_https.request.assert_called_once()
+    mock_https.getresponse.assert_called_once()
+    mock_https.close.assert_called_once()
+    assert "Error sending notification via Pushover" in logs[0]
+    assert "application token is invalid" in logs[0]
 
 # Test getting device state from the mocked Rachio API
 def test_get_devicestate(monkeypatch, mock_https):
