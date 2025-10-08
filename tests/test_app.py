@@ -9,18 +9,22 @@ from rachio_notifier import (
     main
 )
 
+# Test writing and loading persistent data
 def test_write_and_load(fake_jsondata):
     write_persistent_data("2025-10-05T12:00:00Z", True)
     old_next_run, old_reminder = load_persistent_data()
     assert old_next_run == "2025-10-05T12:00:00Z"
     assert old_reminder is True
 
+# Test the notification function to ensure it makes the expected HTTP calls
+# TODO: This test needs improvement to actually verify the notification was sent
 def test_notification(mock_https):
     notification("Test")
     mock_https.request.assert_called_once()
     mock_https.getresponse.assert_called_once()
     mock_https.close.assert_called_once()
 
+# Test getting device state from the mocked Rachio API
 def test_get_devicestate(monkeypatch, mock_https):
     mock_reponse_json = """
     {
@@ -53,6 +57,7 @@ def test_get_devicestate(monkeypatch, mock_https):
     assert device_state == "IDLE"
     assert next_run == "2025-10-05T12:00:00Z"
 
+# Test the time_magic function for various scenarios
 def test_time_magic_tomorrow(monkeypatch):
     from datetime import datetime, timedelta
     import pytz
@@ -71,6 +76,7 @@ def test_time_magic_tomorrow(monkeypatch):
     _, _, _, _, tomorrow = time_magic("2025-10-02T12:00:00Z")
     assert tomorrow is True
 
+# Test the main function when the device state is IDLE and the schedule has changed
 def test_main_idle_updates(fake_jsondata, monkeypatch):
     # Define object to capture log messages
     logs = []
@@ -109,6 +115,7 @@ def test_main_idle_updates_reminder(fake_jsondata, monkeypatch):
     assert "No change to irrigation schedule was detected" in logs[0]
     assert any("Reminder: Sprinklers will run tomorrow at" in log for log in logs)
 
+# Test the main function when the device state is WATERING
 def test_main_watering(monkeypatch, no_exit):
     # Define object to capture log messages
     logs = []
@@ -126,6 +133,7 @@ def test_main_watering(monkeypatch, no_exit):
     assert logs, "log_msg should have been called"
     assert logs[0] == "Sprinklers are currently running. Not evaluating the schedule at this time."
 
+# Test the main function when the device state is STANDBY
 def test_main_standby(monkeypatch, no_exit):
     # Define object to capture log messages
     logs = []
