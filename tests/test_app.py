@@ -22,9 +22,32 @@ def test_notification(mock_https):
     mock_https.close.assert_called_once()
 
 def test_get_devicestate(monkeypatch, mock_https):
-    mock_https.getresponse.return_value.read.return_value = json.dumps({
-        "state": {"state": "IDLE", "nextRun": "2025-10-05T12:00:00Z"}
-    }).encode()
+    mock_reponse_json = """
+    {
+      "state": {
+        "deviceId": "REDACTED",
+        "health": "GOOD",
+        "state": "IDLE",
+        "correctFirmware": true,
+        "correctRainDelay": true,
+        "correctSchedule": true,
+        "lastRun": "2025-09-29T11:03:30Z",
+        "nextRun": "2025-10-05T12:00:00Z",
+        "firmwareVersion": "iro3-firmware-hk-5-645",
+        "rainSensorTripped": false,
+        "rssi": -62,
+        "desiredState": "DESIRED_ACTIVE",
+        "desiredRainDelayExpiration": "1970-01-01T00:00:00Z",
+        "flexNodes": [],
+        "desiredSettleTime": 105,
+        "flowFirmwareVersion": "",
+        "desiredIdleLeakDetection": true,
+        "desiredIdleLeakTime": 180,
+        "desiredLightBarSetting": "ONE_HUNDRED_PERCENT"
+      }
+    }
+    """
+    mock_https.getresponse.return_value.read.return_value = mock_reponse_json.encode()
 
     device_state, next_run = get_devicestate()
     assert device_state == "IDLE"
