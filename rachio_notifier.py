@@ -216,7 +216,7 @@ def main(): # pylint: disable=too-many-branches
 
         # If the reminder variable was not set in this block, assign it the value from old_reminder
         try:
-            reminder # pylint: disable=used-before-assignment
+            reminder # pylint: disable=possibly-used-before-assignment
         except NameError:
             reminder = old_reminder
 
